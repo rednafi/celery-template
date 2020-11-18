@@ -13,27 +13,15 @@ app.conf.update(
         "broker_url": "redis://localhost:6379/0",
         "result_backend": "redis://localhost:6379/1",
         "task_queues": (
-            Queue("default", routing_key="default.#"),
-            Queue("q1", routing_key="q1.#"),
+            Queue("default"),
+            Queue("q1"),
         ),
         "task_default_queue": "default",
         "task_routes": {
-            "calc.pkg_1.tasks.add": {
-                "queue": "default",
-                "routing_key": "default.add",
-            },
-            "calc.pkg_1.tasks.sub": {
-                "queue": "default",
-                "routing_key": "default.sub",
-            },
-            "calc.pkg_2.tasks.mul": {
-                "queue": "q1",
-                "routing_key": "q1.mul",
-            },
-            "calc.pkg_2.tasks.div": {
-                "queue": "q1",
-                "routing_key": "q1.div",
-            },
+            "calc.pkg_1.tasks.add": {"queue": "default"},
+            "calc.pkg_1.tasks.sub": {"queue": "default"},
+            "calc.pkg_2.tasks.mul": {"queue": "q1"},
+            "calc.pkg_2.tasks.div": {"queue": "q1"},
         },
         "imports": (
             "calc.pkg_1.tasks",
