@@ -57,4 +57,4 @@ LOG MSG     : %(name)s - %(levelname)s - %(message)s
 
 
 # For development: You can use this to run the tasks instantly, without workers
-#app.conf.update(TASK_ALWAYS_EAGER=True)
+# app.conf.update(TASK_ALWAYS_EAGER=True)
