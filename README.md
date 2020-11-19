@@ -7,18 +7,18 @@ This self-contained template is intended to demonstrate **Celery** based asynchr
 ## Organization
 
 ```
-calc                   # Application root
-├── __init__.py        # Celery app instance is imported here
-├── celery.py          # Celery configs live here
-├── main.py            # Chained tasks are called from here
+calc                    # Application root
+├── __init__.py         # Celery app instance is imported here
+├── celery.py           # Celery configs live here
+├── main.py             # Chained tasks are called from here
 ├── pkg_1
 │   ├── __init.__.py
-│   ├── tasks.py      # Async task `add` and `sub` are defined here
-│   └── chains.py     # Task `add` and `sub` are chained here
+│   ├── tasks.py        # Async task `add` and `sub` are defined here
+│   └── chains.py       # Task `add` and `sub` are chained here
 └── pkg_2
     ├── __init__.py
-    ├── tasks.py      # Async task `mul` and `div` are defined here
-    └── chains.py     # Tasks `mul` and `div` are chained here
+    ├── tasks.py        # Async task `mul` and `div` are defined here
+    └── chains.py       # Tasks `mul` and `div` are chained here
 
 2 directories, 9 files
 ```
@@ -66,27 +66,27 @@ If you're running a Debian based distro and Gnome terminal, then you're in luck.
 
     * Spawn the **default** queue and assign it to the **default** worker:
 
-    ```bash
-    celery -A calc worker -Q default -n default --loglevel=INFO --concurrency=1
-    ```
+        ```bash
+        celery -A calc worker -Q default -n default --loglevel=INFO --concurrency=1
+        ```
 
     * Spawn the **q1** queue and assign it to the **q1** worker:
 
-    ```bash
-    celery -A calc worker -Q q1 -n q1 --loglevel=INFO --concurrency=1
-    ```
+        ```bash
+        celery -A calc worker -Q q1 -n q1 --loglevel=INFO --concurrency=1
+        ```
 
     * Start the task monitoring tool:
 
-    ```bash
-    celery flower -A calc --address=127.0.0.1 --port=5555
-    ```
+        ```bash
+        celery flower -A calc --address=127.0.0.1 --port=5555
+        ```
 
     * Start the application:
 
-    ```bash
-    python -m calc.main
-    ```
+        ```bash
+        python -m calc.main
+        ```
 
 ## Monitoring
 
