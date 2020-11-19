@@ -32,7 +32,7 @@ app.conf.update(
 
 
 class LogColor(str, Enum):
-    START_CYAN = "📗:" + "\033[92m"
+    START_CYAN = "\033[92m"
     END_WHITE = "\033[0m"
 
 
@@ -42,7 +42,11 @@ def setup_task_logger(logger, *args, **kwargs):
         handler.setFormatter(
             TaskFormatter(
                 LogColor.START_CYAN
-                + """TIMESTAMP: %(asctime)s
+                + """
+📗 Async Task Log
+==================
+
+TIMESTAMP   : %(asctime)s
 Task ID     : %(task_id)s
 TASK NAME   : %(task_name)s
 LOG MSG     : %(name)s - %(levelname)s - %(message)s
@@ -53,4 +57,4 @@ LOG MSG     : %(name)s - %(levelname)s - %(message)s
 
 
 # For development: You can use this to run the tasks instantly, without workers
-# app.conf.update(TASK_ALWAYS_EAGER=True)
+#app.conf.update(TASK_ALWAYS_EAGER=True)

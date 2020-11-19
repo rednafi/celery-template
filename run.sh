@@ -9,6 +9,9 @@ q_q1="celery -A calc worker -Q q1 -n q1 --loglevel=INFO --concurrency=1"
 # Spawn flower
 flower="celery flower -A calc --address=127.0.0.1 --port=5555"
 
+# Run main task
+calc="python -m calc.main"
+
 # Start all project's runners
 # the ;SHELL command keeps and holds the tabs open
 gnome-terminal --tab --title="Q-Default" -- bash -ic "$q_default;$SHELL"
@@ -21,3 +24,5 @@ done
 
 echo 'Starting flower'
 gnome-terminal --tab --title="Flower" -- bash -ic "$flower;$SHELL"
+
+gnome-terminal --tab --title="Calc" -- bash -ic "$calc;$SHELL"

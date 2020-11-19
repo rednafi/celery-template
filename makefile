@@ -1,3 +1,6 @@
+.PHONY: all
+all: run_redis run_app
+
 .PHONY: help
 help:
 	grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
@@ -16,7 +19,7 @@ run_redis: venvcheck
 	@docker-compose down
 	@docker-compose up -d
 
-.PHONY: run_workers		  ## Spawn the workers
-run_workers: venvcheck
+.PHONY: run_app		  ## Spawn the workers and the tasks
+run_app: venvcheck
 	@chmod +x run.sh
 	@./run.sh
