@@ -4,14 +4,15 @@ from celery import Celery
 from celery.app.log import TaskFormatter
 from celery.signals import after_setup_task_logger
 from kombu import Queue
+from calc.settings import config
 
 app = Celery("calc")
 
 # app.autodiscover_tasks()
 app.conf.update(
     {
-        "broker_url": "redis://localhost:6379/0",
-        "result_backend": "redis://localhost:6379/1",
+        "broker_url": config.REDIS_BROKER_URL,
+        "result_backend": config.REDIS_RESULT_BACKEND,
         "task_queues": (
             Queue("default"),
             Queue("q1"),
