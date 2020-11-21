@@ -15,12 +15,13 @@ calc                    # Application root
 │   ├── __init.__.py
 │   ├── tasks.py        # Async task `add` and `sub` are defined here
 │   └── chains.py       # Task `add` and `sub` are chained here
-└── pkg_2
-    ├── __init__.py
-    ├── tasks.py        # Async task `mul` and `div` are defined here
-    └── chains.py       # Tasks `mul` and `div` are chained here
+├── pkg_2
+│   ├── __init__.py
+│   ├── tasks.py        # Async task `mul` and `div` are defined here
+│   └── chains.py       # Tasks `mul` and `div` are chained here
+└── settings.py
 
-2 directories, 9 files
+2 directories, 10 files
 ```
 
 Here, the main application's name is **calc** that works in the following way:
