@@ -92,3 +92,12 @@ If you're running a Debian based distro and Gnome terminal, then you're in luck.
 ## Monitoring
 
 * You can monitor your tasks by going to `http://localhost:5555` on your browser
+
+## Solving Common Issues
+
+* If you encounter [substantial time-drift](https://stackoverflow.com/questions/40702942/changing-timezone-on-redis-server) issue, then export the following before starting flower.
+
+```
+export TZ='UTC'
+```
+
