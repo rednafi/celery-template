@@ -68,13 +68,13 @@ If you're running a Debian based distro and Gnome terminal, then you're in luck.
     * Spawn the **default** queue and assign it to the **default** worker:
 
         ```bash
-        celery -A calc worker -Q default -n default --loglevel=INFO --concurrency=1
+        celery -A calc worker -Q default -n alpha --loglevel=INFO --concurrency=1
         ```
 
     * Spawn the **q1** queue and assign it to the **q1** worker:
 
         ```bash
-        celery -A calc worker -Q q1 -n q1 --loglevel=INFO --concurrency=1
+        celery -A calc worker -Q another -n beta --loglevel=INFO --concurrency=1
         ```
 
     * Start the task monitoring tool:
@@ -100,4 +100,3 @@ If you're running a Debian based distro and Gnome terminal, then you're in luck.
 ```
 export TZ='UTC'
 ```
-

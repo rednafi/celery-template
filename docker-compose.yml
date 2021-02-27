@@ -1,7 +1,12 @@
 version: "3.8"
 services:
-  redis:
-    container_name: redis-cont
-    image: redis:alpine
-    ports:
-      - 6379:6379
+  rabbitmq:
+      image: rabbitmq:3-management
+      container_name: rabbitmq
+      environment:
+          RABBITMQ_DEFAULT_USER: "ubuntu"
+          RABBITMQ_DEFAULT_PASS: "debian"
+          RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "512MiB"
+      ports:
+          - 5672:5672
+          - 15672:15672

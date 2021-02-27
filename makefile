@@ -1,5 +1,5 @@
 .PHONY: all
-all: run_redis run_app
+all: run_rabbit run_app
 
 .PHONY: help
 help:
@@ -14,8 +14,8 @@ ifeq ("$(VIRTUAL_ENV)","")
 	exit 1
 endif
 
-.PHONY: run_redis         ## Run the local redis messenger
-run_redis: venvcheck
+.PHONY: run_rabbit         ## Run the local redis messenger
+run_rabbit: venvcheck
 	@docker-compose down
 	@docker-compose up -d
 
