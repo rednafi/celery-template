@@ -1,10 +1,13 @@
 #!/bin/bash
 
+# Run the rabbitmq server.
+docker-compose up -d
+
 # Spawn the default queue
-q_default="celery -A calc worker -Q default -n default --loglevel=INFO --concurrency=1"
+q_default="celery -A calc worker -Q default -n alpha --loglevel=INFO --concurrency=1"
 
 # Spawn q1
-q_q1="celery -A calc worker -Q q1 -n q1 --loglevel=INFO --concurrency=1"
+q_another="celery -A calc worker -Q another -n beta --loglevel=INFO --concurrency=1"
 
 # Spawn flower
 flower="celery flower -A calc --address=127.0.0.1 --port=5555"
@@ -16,7 +19,7 @@ calc="python -m calc.main"
 # the ;SHELL command keeps and holds the tabs open
 gnome-terminal --tab --title="Q-Default" -- bash -ic "$q_default;$SHELL"
 
-gnome-terminal --tab --title="Q-Q1" -- bash -ic "$q_q1;$SHELL"
+gnome-terminal --tab --title="Q-Another" -- bash -ic "$q_another;$SHELL"
 
 until timeout 10s celery -A calc inspect ping; do
 >&2 echo "Celery workers not available"
