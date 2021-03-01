@@ -1,4 +1,3 @@
-import time
 from random import randint
 
 from calc.pkg_1 import chains as chains_1

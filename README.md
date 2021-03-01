@@ -58,7 +58,7 @@ If you're running a Debian based distro and Gnome terminal, then you're in luck.
 * Run:
 
     ```
-    make
+    make run_app
     ```
 
 ## On Mac or If you're not using Gnome Terminal
@@ -91,12 +91,5 @@ If you're running a Debian based distro and Gnome terminal, then you're in luck.
 
 ## Monitoring
 
-* You can monitor your tasks by going to `http://localhost:5555` on your browser
-
-## Solving Common Issues
-
-* If you encounter [substantial time-drift](https://stackoverflow.com/questions/40702942/changing-timezone-on-redis-server) issue, then export the following before starting flower.
-
-```
-export TZ='UTC'
-```
+* To monitor the broker you can go to `http://localhost:15672` on your browser.
+* You can also monitor your tasks using **celery-flower** by going to `http://localhost:5555`.

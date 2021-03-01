@@ -11,7 +11,6 @@ from calc.settings import config
 app = Celery("calc")
 
 
-
 # Setting up Broker URL and Result Backend.
 app.conf.broker_url = config.CELERY_BROKER_URL
 app.conf.result_backend = config.CELERY_RESULT_BACKEND
@@ -52,7 +51,7 @@ class TaskRouter:
         "routing_key": "beta.another",
     }
 
-    # Tasks in queues
+    # Tasks in queues.
     default = (
         "calc.pkg_1.tasks.add",
         "calc.pkg_1.tasks.sub",
