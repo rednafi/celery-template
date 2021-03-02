@@ -2,7 +2,10 @@
 
 ## Description
 
-This self-contained template is intended to demonstrate **Celery** based asynchronous **task routing** and **task chaining**.
+This template demonstrates a workflow for asynchronous task execution using Python's [Celery](https://docs.celeryproject.org/en/stable/) framework. It uses [Rabbitmq](https://www.rabbitmq.com/) as the broker and result backend.
+
+The template primarily focuses on **task routing** that conforms to [AMQP](https://en.wikipedia.org/wiki/Advanced_Message_Queuing_Protocol)—and basic **task chaining** where tasks can be dependent on other tasks and need to be executed in order.
+
 
 ## Organization
 
