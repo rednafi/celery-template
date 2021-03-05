@@ -1,4 +1,11 @@
-# Celery Template
+<div align="center">
+   <h1>Celery Template</h1>
+</div>
+
+
+
+![MQ Diagram](https://user-images.githubusercontent.com/30027932/110140857-bebaa400-7dfe-11eb-90dd-cc4c1afc06a5.png)
+
 
 ## Description
 
