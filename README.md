@@ -68,13 +68,13 @@ If you're running a Debian based distro and Gnome terminal, then you're in luck.
 
 * Run the following commands in different terminal windows sequentially:
 
-    * Spawn the **default** queue and assign it to the **default** worker:
+    * Spawn the **default** queue and assign it to the **alpha** worker:
 
         ```bash
         celery -A calc worker -Q default -n alpha --loglevel=INFO --concurrency=1
         ```
 
-    * Spawn the **q1** queue and assign it to the **q1** worker:
+    * Spawn the **another** queue and assign it to the **beta** worker:
 
         ```bash
         celery -A calc worker -Q another -n beta --loglevel=INFO --concurrency=1
