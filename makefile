@@ -25,5 +25,5 @@ lint: venvcheck
 
 .PHONY: run_app		  ## Spawn the workers and the tasks
 run_app: venvcheck
-	@chmod +x run.sh
+	@sudo chmod +x run.sh
 	@./run.sh
