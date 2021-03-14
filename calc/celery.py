@@ -20,12 +20,21 @@ exchange_beta = Exchange("beta", type="direct")
 
 # Declaring AMQP Queues and binding them with the Exchanges.
 queue_default = Queue("default", exchange_alpha, routing_key="alpha.default")
-queue_another = Queue("another", exchange_beta, routing_key="beta.another")
+queue_another_0 = Queue("another_0", exchange_beta, routing_key="beta.another_0")
+queue_another_1 = Queue("another_1", exchange_beta, routing_key="beta.another_1")
+queue_another_2 = Queue("another_2", exchange_beta, routing_key="beta.another_2")
 
 # Injecting task queue config to Celery config.
-app.conf.task_queues = (queue_default, queue_another)
+app.conf.task_queues = (
+    queue_default,
+    queue_another_0,
+    queue_another_1,
+    queue_another_2,
+)
 
-# Declaring default exchange and queue config.
+# Declaring default exchange and queue config. This is mostly useless because
+# our clever TaskRouter will throw an exception when an orphan task without properly
+# configured worker and queue appears.
 app.conf.task_default_queue = "default"
 app.conf.task_default_exchange = "alpha"
 app.conf.task_default_routing_key = "default"
@@ -44,35 +53,39 @@ class RouterMeta(type):
     """Metaclass to make sure that the target TaskRouter class strictly
     follows this format—
 
-    class TaskRouter(metaclass=RouterMeta):
+    EXCHANGES = {
+        "alpha": {
+            "exchange_type": "direct",
+        },
+        "beta": {
+            "exchange_type": "direct",
+        },
+    }
 
-        EXCHANGES = {
-            "alpha": {
-                "exchange": "alpha",
-                "exchange_type": "direct",
-                "routing_key": "alpha.default",
-            },
-            "beta": {
-                "exchange": "beta",
-                "exchange_type": "direct",
-                "routing_key": "beta.another",
-            },
+    QUEUES_TO_EXCHANGES = {
+        "default": "alpha",
+        "another_0": "beta",
+        "another_1": "beta",
+        "another_2": "beta",
+    }
 
+    QUEUES_TO_TASKS = {
+        "default": ("root.pkg_1.tasks.task_0",),
+        "another_0": ("root.pkg_1.tasks.task_1",),
+        "another_1": ("root.pkg_2.tasks.task_2",),
+        "another_2": ("root.pkg_2.tasks.task_3",),
+    }
+
+    Returns
+    -------
+        .route(task_name="root.pkg_2.tasks.task_3")
+        returns the corresponding Exchange configuration
+
+        {
+            "exchange_type": "direct",
+            "exchange": "beta",
+            "routing_key": "beta.another_2"
         }
-
-        QUEUES_TO_EXCHANGES = {"default": "alpha", "another": "beta"}
-
-        QUEUES_TO_TASKS = {
-            "default": (
-                "root.pkg_1.tasks.task_1",
-                "root.pkg_1.tasks.task_2",
-            ),
-            "another": (
-                "root.pkg_2.tasks.task_1",
-                "root.pkg_2.tasks.task_2",
-            ),
-        }
-
     """
 
     @staticmethod
@@ -88,21 +101,21 @@ class RouterMeta(type):
 
     def __new__(metacls, cls, bases, namespace):
 
-        # Only these attributes are allowed in the classes that has RouteMeta
+        # Only these attributes are allowed in the classes that has RouteMeta.
         allowed_attrs = ("EXCHANGES", "QUEUES_TO_EXCHANGES", "QUEUES_TO_TASKS")
 
         # Filtering out the dunder methods so that we're dealing with only the
-        # user-defined attributes
+        # user-defined attributes.
         _namespace = {}
         for attr_name, attr_value in namespace.items():
             if not metacls._is_dunder(attr_name):
                 _namespace[attr_name] = attr_value
 
-        # TaskRouter class cannot be empty
+        # TaskRouter class cannot be empty.
         if not _namespace:
             raise RouterConfigError("router config cannot be empty")
 
-        # Guardrails to make sure the config dicts in the target class is consistent
+        # Guardrails to make sure the config dicts in the target class is consistent.
         if not tuple(_namespace.keys()) == allowed_attrs:
             raise RouterConfigError(f"{cls} should contain attributes {allowed_attrs}")
 
@@ -116,28 +129,26 @@ class RouterMeta(type):
             if attr_name == "EXCHANGES":
                 for k, v in attr_value.items():
                     if not isinstance(k, str):
-                        raise RouterConfigError(f"{attr_name} keys have to be strings")
+                        raise RouterConfigError(f"{attr_name} keys should be strings")
 
                     if not isinstance(v, dict):
                         raise RouterConfigError(f"{attr_name} format is incorrect")
 
-                    if tuple(v.keys()) != ("exchange", "exchange_type", "routing_key"):
+                    if not "exchange_type" in v.keys():
                         raise RouterConfigError(f"{attr_name} format is incorrect")
 
             if attr_name == "QUEUES_TO_EXCHANGES":
                 for k, v in attr_value.items():
                     if not isinstance(k, str):
-                        raise RouterConfigError(f"{attr_name} keys have to be strings")
+                        raise RouterConfigError(f"{attr_name} keys should be strings")
 
                     if not isinstance(v, str):
-                        raise RouterConfigError(
-                            f"{attr_name} values have to be strings"
-                        )
+                        raise RouterConfigError(f"{attr_name} values should be strings")
 
             if attr_name == "QUEUES_TO_TASKS":
                 for k, v in attr_value.items():
                     if not isinstance(k, str):
-                        raise RouterConfigError(f"{attr_name} keys have to be strings")
+                        raise RouterConfigError(f"{attr_name} keys should be strings")
 
                     if not isinstance(v, (tuple, list)):
                         raise RouterConfigError(f"{attr_name} format is incorrect")
@@ -146,13 +157,12 @@ class RouterMeta(type):
         QUEUES_TO_EXCHANGES = _namespace["QUEUES_TO_EXCHANGES"]
         QUEUES_TO_TASKS = _namespace["QUEUES_TO_TASKS"]
 
-        # Config dicts in the target class must have same length
-
+        # Config dicts in the target class must have same length.
         if not len(EXCHANGES) == len(set(QUEUES_TO_EXCHANGES.values())):
             raise RouterConfigError("inconsistent exchange count")
 
         if not len(QUEUES_TO_EXCHANGES) == len(QUEUES_TO_TASKS):
-            raise RouterConfigError("queue mapping dicts must have same length")
+            raise RouterConfigError("inconsistent queue count")
 
         if set(EXCHANGES.keys()) != set(QUEUES_TO_EXCHANGES.values()):
             raise RouterConfigError("inconsistent exchange name")
@@ -160,17 +170,20 @@ class RouterMeta(type):
         if set(QUEUES_TO_EXCHANGES.keys()) != set(QUEUES_TO_TASKS.keys()):
             raise RouterConfigError("inconsistent queue name")
 
-        # Inject the route method into the target class
+        # Inject the route method into the target class.
         def route(_, task_name):
-            # Self is omitted here to save attribute search for efficiency gain
-            for exchange, tasks in zip(
-                QUEUES_TO_EXCHANGES.values(), QUEUES_TO_TASKS.values()
+            # Self is omitted here to save attribute search for efficiency gain.
+            for (queue, exchange), tasks in zip(
+                QUEUES_TO_EXCHANGES.items(), QUEUES_TO_TASKS.values()
             ):
 
                 for task in tasks:
                     if task_name == task:
                         ex_cnf = EXCHANGES.get(exchange)
-                        return ex_cnf
+                        if isinstance(ex_cnf, dict):
+                            ex_cnf["exchange"] = exchange
+                            ex_cnf["routing_key"] = f"{exchange}.{queue}"
+                            return ex_cnf
                     else:
                         ex_cnf = None
 
@@ -185,28 +198,25 @@ class TaskRouter(metaclass=RouterMeta):
 
     EXCHANGES = {
         "alpha": {
-            "exchange": "alpha",
             "exchange_type": "direct",
-            "routing_key": "alpha.default",
         },
         "beta": {
-            "exchange": "beta",
             "exchange_type": "direct",
-            "routing_key": "beta.another",
         },
     }
 
-    QUEUES_TO_EXCHANGES = {"default": "alpha", "another": "beta"}
+    QUEUES_TO_EXCHANGES = {
+        "default": "alpha",
+        "another_0": "beta",
+        "another_1": "beta",
+        "another_2": "beta",
+    }
 
     QUEUES_TO_TASKS = {
-        "default": (
-            "calc.pkg_1.tasks.add",
-            "calc.pkg_1.tasks.sub",
-        ),
-        "another": (
-            "calc.pkg_2.tasks.mul",
-            "calc.pkg_2.tasks.div",
-        ),
+        "default": ("calc.pkg_1.tasks.add",),
+        "another_0": ("calc.pkg_1.tasks.sub",),
+        "another_1": ("calc.pkg_2.tasks.mul",),
+        "another_2": ("calc.pkg_2.tasks.div",),
     }
 
 
@@ -244,5 +254,5 @@ LOG MSG     : %(name)s - %(levelname)s - %(message)s
         )
 
 
-# For development: You can use this to run the tasks instantly, without workers
+# For development: You can use this to run the tasks instantly, without workers.
 # app.conf.update(TASK_ALWAYS_EAGER=True)

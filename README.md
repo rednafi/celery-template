@@ -4,7 +4,7 @@
 
 
 
-![MQ Diagram](https://user-images.githubusercontent.com/30027932/110140857-bebaa400-7dfe-11eb-90dd-cc4c1afc06a5.png)
+![MQ Diagram](https://user-images.githubusercontent.com/30027932/111075718-88260d00-8513-11eb-985e-d2bbae3a048d.png)
 
 
 ## Description
@@ -44,8 +44,12 @@ Here, the main application's name is **calc** that works in the following way:
 
 * Task `add` and `sub` are chained together in `calc.pkg_1.chains.add_sub` function and task `mul` and `div` are chained together in `calc.pkg_2.chains.mul_div` function.
 
-* The `add_sub` task is executed using Celery's `default` queue and the `mul_div` task is executed in the `another` queue.
-* Worker `alpha` consumes task from the `default` queue and worker `beta` consumes task from the `another` queue.
+* The `add_sub` chained task is executed using Celery's `default` and `another_0` queues—where `add` task is consumed from the `default` queue and `sub` task is consumed from the `another_0` queue.
+
+* The `mul_div` chained task is executed using the `another_1` and `another_2` queues—where `mul` task is consumed from the `another_1` queue and `div` task is consumed from the `another_2` queue.
+
+* Worker `alpha` consumes task from the `default` queue and worker `beta` consumes task from `another_0`, `another_1`, and  `another_2` queues.
+
 * Tasks are logged via a custom logger and they are explicitly routed in the `celery.py` file.
 
 ## Installation
