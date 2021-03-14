@@ -44,11 +44,11 @@ Here, the main application's name is **calc** that works in the following way:
 
 * Task `add` and `sub` are chained together in `calc.pkg_1.chains.add_sub` function and task `mul` and `div` are chained together in `calc.pkg_2.chains.mul_div` function.
 
-* The `add_sub` chained task is executed using Celery's `default` and `another_0` queues—where `add` task is consumed from the `default` queue and `sub` task is consumed from the `another_0` queue.
+* The `add_sub` chained task is executed using Celery's `default` and `another_0` queues—where `add` task is consumed from `default` queue and `sub` task is consumed from `another_0` queue.
 
-* The `mul_div` chained task is executed using the `another_1` and `another_2` queues—where `mul` task is consumed from the `another_1` queue and `div` task is consumed from the `another_2` queue.
+* The `mul_div` chained task is executed using the `another_1` and `another_2` queues—where `mul` task is consumed from `another_1` queue and `div` task is consumed from `another_2` queue.
 
-* Worker `alpha` consumes task from the `default` queue and worker `beta` consumes task from `another_0`, `another_1`, and  `another_2` queues.
+* Worker `alpha` consumes task from`default` queue and worker `beta` consumes task from `another_0`, `another_1`, and  `another_2` queues.
 
 * Tasks are logged via a custom logger and they are explicitly routed in the `celery.py` file.
 
@@ -65,7 +65,7 @@ Here, the main application's name is **calc** that works in the following way:
 
 ### On Linux
 
-If you're running a Debian based distro and Gnome terminal, then you're in luck.
+If you're running a Debian-based distro and Gnome terminal, then you're in luck.
 
 * Open a terminal and `cd` to **celery-template** folder
 * Make sure your virtual environment is active
@@ -82,13 +82,14 @@ If you're running a Debian based distro and Gnome terminal, then you're in luck.
     * Spawn the **default** queue and assign it to the **alpha** worker:
 
         ```bash
-        celery -A calc worker -Q default -n alpha --loglevel=INFO --concurrency=1
+        celery -A calc worker -Q default -l INFO -n alpha@%h --concurrency=1
         ```
 
     * Spawn the **another** queue and assign it to the **beta** worker:
 
         ```bash
-        celery -A calc worker -Q another -n beta --loglevel=INFO --concurrency=1
+        celery -A calc worker -Q another_0,another_1,another_2 \
+        -l INFO -n beta@%h --concurrency=1
         ```
 
     * Start the task monitoring tool:
