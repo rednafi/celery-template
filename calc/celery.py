@@ -89,7 +89,7 @@ class RouterMeta(type):
     def __new__(metacls, cls, bases, namespace):
 
         # Only these attributes are allowed in the classes that has RouteMeta
-        allowed_attrs = ("EXCHANGES", "EXCHANGES_TO_QUEUES", "QUEUES_TO_TASKS")
+        allowed_attrs = ("EXCHANGES", "QUEUES_TO_EXCHANGES", "QUEUES_TO_TASKS")
 
         # Filtering out the dunder methods so that we're dealing with only the
         # user-defined attributes
@@ -124,7 +124,7 @@ class RouterMeta(type):
                     if tuple(v.keys()) != ("exchange", "exchange_type", "routing_key"):
                         raise RouterConfigError(f"{attr_name} format is incorrect")
 
-            if attr_name == "EXCHANGES_TO_QUEUES":
+            if attr_name == "QUEUES_TO_EXCHANGES":
                 for k, v in attr_value.items():
                     if not isinstance(k, str):
                         raise RouterConfigError(f"{attr_name} keys have to be strings")
@@ -143,27 +143,28 @@ class RouterMeta(type):
                         raise RouterConfigError(f"{attr_name} format is incorrect")
 
         EXCHANGES = _namespace["EXCHANGES"]
-        EXCHANGES_TO_QUEUES = _namespace["EXCHANGES_TO_QUEUES"]
+        QUEUES_TO_EXCHANGES = _namespace["QUEUES_TO_EXCHANGES"]
         QUEUES_TO_TASKS = _namespace["QUEUES_TO_TASKS"]
 
         # Config dicts in the target class must have same length
-        if not len(EXCHANGES) == len(EXCHANGES_TO_QUEUES) == len(QUEUES_TO_TASKS):
-            raise RouterConfigError("router configuration dicts must have same length")
 
-        for e1, (e2, q1), q2 in zip(
-            EXCHANGES.keys(), EXCHANGES_TO_QUEUES.items(), QUEUES_TO_TASKS.keys()
-        ):
-            if e1 != e2:
-                raise RouterConfigError("inconsistent exchange name")
+        if not len(EXCHANGES) == len(set(QUEUES_TO_EXCHANGES.values())):
+            raise RouterConfigError("inconsistent exchange count")
 
-            if q1 != q2:
-                raise RouterConfigError("inconsistent queue name")
+        if not len(QUEUES_TO_EXCHANGES) == len(QUEUES_TO_TASKS):
+            raise RouterConfigError("queue mapping dicts must have same length")
+
+        if set(EXCHANGES.keys()) != set(QUEUES_TO_EXCHANGES.values()):
+            raise RouterConfigError("inconsistent exchange name")
+
+        if set(QUEUES_TO_EXCHANGES.keys()) != set(QUEUES_TO_TASKS.keys()):
+            raise RouterConfigError("inconsistent queue name")
 
         # Inject the route method into the target class
         def route(_, task_name):
             # Self is omitted here to save attribute search for efficiency gain
             for exchange, tasks in zip(
-                EXCHANGES_TO_QUEUES.keys(), QUEUES_TO_TASKS.values()
+                QUEUES_TO_EXCHANGES.values(), QUEUES_TO_TASKS.values()
             ):
 
                 for task in tasks:
@@ -195,7 +196,7 @@ class TaskRouter(metaclass=RouterMeta):
         },
     }
 
-    EXCHANGES_TO_QUEUES = {"alpha": "default", "beta": "another"}
+    QUEUES_TO_EXCHANGES = {"default": "alpha", "another": "beta"}
 
     QUEUES_TO_TASKS = {
         "default": (
