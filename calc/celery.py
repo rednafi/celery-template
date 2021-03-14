@@ -60,7 +60,7 @@ class RouterMeta(type):
 
         }
 
-        EXCHANGES_TO_QUEUES = {"alpha": "default", "beta": "another"}
+        QUEUES_TO_EXCHANGES = {"default": "alpha", "another": "beta"}
 
         QUEUES_TO_TASKS = {
             "default": (
