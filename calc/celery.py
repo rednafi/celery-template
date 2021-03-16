@@ -195,6 +195,9 @@ class RouterMeta(type):
 
 
 class TaskRouter(metaclass=RouterMeta):
+    """This where the routing relationships are laid out. This is the
+    enpointsonly class you'll need to update if you're just adding or removing
+    new tasks."""
 
     EXCHANGES = {
         "alpha": {

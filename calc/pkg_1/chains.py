@@ -4,6 +4,8 @@ from calc.pkg_1 import tasks
 
 
 def add_sub(a, b):
+    """Sequentially executes the add and sub tasks."""
+
     task_chain = chain(
         # task 1: add
         tasks.add.si(a, b),

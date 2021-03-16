@@ -4,6 +4,8 @@ from calc.pkg_2 import tasks
 
 
 def mul_div(a, b):
+    """Sequentially executes the mul and div tasks."""
+
     task_chain = chain(
         # task 1: mul
         tasks.mul.si(a, b),
