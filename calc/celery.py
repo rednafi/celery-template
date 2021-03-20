@@ -19,12 +19,29 @@ exchange_alpha = Exchange("alpha", type="direct")
 exchange_beta = Exchange("beta", type="direct")
 
 # Declaring AMQP Queues and binding them with the Exchanges.
-queue_default = Queue("default", exchange_alpha, routing_key="alpha.default")
-queue_another_0 = Queue("another_0", exchange_beta, routing_key="beta.another_0")
-queue_another_1 = Queue("another_1", exchange_beta, routing_key="beta.another_1")
-queue_another_2 = Queue("another_2", exchange_beta, routing_key="beta.another_2")
+queue_default = Queue(
+    name="default",
+    exchange=exchange_alpha,
+    routing_key="alpha.default",
+)
+queue_another_0 = Queue(
+    name="another_0",
+    exchange=exchange_beta,
+    routing_key="beta.another_0",
+)
+queue_another_1 = Queue(
+    name="another_1",
+    exchange=exchange_beta,
+    routing_key="beta.another_1",
+)
+queue_another_2 = Queue(
+    name="another_2",
+    exchange=exchange_beta,
+    routing_key="beta.another_2",
+)
 
-# Injecting task queue config to Celery config.
+
+# Registering task queues into Celery config.
 app.conf.task_queues = (
     queue_default,
     queue_another_0,
@@ -37,7 +54,7 @@ app.conf.task_queues = (
 # configured worker and queue appears.
 app.conf.task_default_queue = "default"
 app.conf.task_default_exchange = "alpha"
-app.conf.task_default_routing_key = "default"
+app.conf.task_default_routing_key = "alpha.default"
 
 # Importing the task modules.
 app.conf.imports = ("calc.pkg_1.tasks", "calc.pkg_2.tasks")
@@ -50,44 +67,6 @@ class RouterConfigError(Exception):
 
 
 class RouterMeta(type):
-    """Metaclass to make sure that the target TaskRouter class strictly
-    follows this format—
-
-    EXCHANGES = {
-        "alpha": {
-            "exchange_type": "direct",
-        },
-        "beta": {
-            "exchange_type": "direct",
-        },
-    }
-
-    QUEUES_TO_EXCHANGES = {
-        "default": "alpha",
-        "another_0": "beta",
-        "another_1": "beta",
-        "another_2": "beta",
-    }
-
-    QUEUES_TO_TASKS = {
-        "default": ("root.pkg_1.tasks.task_0",),
-        "another_0": ("root.pkg_1.tasks.task_1",),
-        "another_1": ("root.pkg_2.tasks.task_2",),
-        "another_2": ("root.pkg_2.tasks.task_3",),
-    }
-
-    Returns
-    -------
-        .route(task_name="root.pkg_2.tasks.task_3")
-        returns the corresponding Exchange configuration
-
-        {
-            "exchange_type": "direct",
-            "exchange": "beta",
-            "routing_key": "beta.another_2"
-        }
-    """
-
     @staticmethod
     def _is_dunder(name):
         """Returns True if a __dunder__ name, False otherwise."""
@@ -101,8 +80,8 @@ class RouterMeta(type):
 
     def __new__(metacls, cls, bases, namespace):
 
-        # Only these attributes are allowed in the classes that has RouteMeta.
-        allowed_attrs = ("EXCHANGES", "QUEUES_TO_EXCHANGES", "QUEUES_TO_TASKS")
+        # Only attribute QUEUES_TO_TASKS is allowed inside the target Router class.
+        allowed_attr = "QUEUES_TO_TASKS"
 
         # Filtering out the dunder methods so that we're dealing with only the
         # user-defined attributes.
@@ -111,121 +90,74 @@ class RouterMeta(type):
             if not metacls._is_dunder(attr_name):
                 _namespace[attr_name] = attr_value
 
-        # TaskRouter class cannot be empty.
+        # Router class cannot be empty.
         if not _namespace:
             raise RouterConfigError("router config cannot be empty")
 
-        # Guardrails to make sure the config dicts in the target class is consistent.
-        if not tuple(_namespace.keys()) == allowed_attrs:
-            raise RouterConfigError(f"{cls} should contain attributes {allowed_attrs}")
+        # Raise error if Router class doesn't have the QUEUES_TO_TASKS attribute.
+        if not allowed_attr in _namespace.keys():
+            raise RouterConfigError(f"router config should contain {allowed_attr}")
 
-        for attr_name, attr_value in _namespace.items():
-            if not isinstance(attr_value, dict):
-                raise RouterConfigError(f"{attr_name} should be a dict")
+        # Guardrails to make sure the config dicts in the Router class is consistent.
+        if len(_namespace.keys()) > 1:
+            raise RouterConfigError(
+                f"{cls} should only contain attribute {allowed_attr}"
+            )
 
-            if not attr_value:
-                raise RouterConfigError(f"{attr_name} cannot be an empty dict")
+        # Attribute QUEUES_TO_TASKS can only have dict value.
+        if not isinstance(_namespace[allowed_attr], dict):
+            raise RouterConfigError(f"{allowed_attr} value should be a dict")
 
-            if attr_name == "EXCHANGES":
-                for k, v in attr_value.items():
-                    if not isinstance(k, str):
-                        raise RouterConfigError(f"{attr_name} keys should be strings")
+        # Attribute QUEUES_TO_TASKS cannot be an empty dict.
+        if not _namespace[allowed_attr]:
+            raise RouterConfigError(f"{allowed_attr} value cannot be an empty dict")
 
-                    if not isinstance(v, dict):
-                        raise RouterConfigError(f"{attr_name} format is incorrect")
+        for k, v in _namespace[allowed_attr].items():
+            # Keys of QUEUES_TO_TASKS can only be Queue objects.
+            if not isinstance(k, Queue):
+                raise RouterConfigError(f"{attr_name} keys should be of type {Queue}")
 
-                    if not "exchange_type" in v.keys():
-                        raise RouterConfigError(f"{attr_name} format is incorrect")
+            # Values of QUEUES_TO_TASKS need to be tuple holding string objects.
+            if not isinstance(v, tuple):
+                raise RouterConfigError(f"{attr_name} value format is incorrect")
 
-            if attr_name == "QUEUES_TO_EXCHANGES":
-                for k, v in attr_value.items():
-                    if not isinstance(k, str):
-                        raise RouterConfigError(f"{attr_name} keys should be strings")
+            # Elements inside the tuple can only be string objects.
+            for elem in v:
+                if not isinstance(elem, str):
+                    raise RouterConfigError("task name need to be of type str")
 
-                    if not isinstance(v, str):
-                        raise RouterConfigError(f"{attr_name} values should be strings")
-
-            if attr_name == "QUEUES_TO_TASKS":
-                for k, v in attr_value.items():
-                    if not isinstance(k, str):
-                        raise RouterConfigError(f"{attr_name} keys should be strings")
-
-                    if not isinstance(v, (tuple, list)):
-                        raise RouterConfigError(f"{attr_name} format is incorrect")
-
-        EXCHANGES = _namespace["EXCHANGES"]
-        QUEUES_TO_EXCHANGES = _namespace["QUEUES_TO_EXCHANGES"]
         QUEUES_TO_TASKS = _namespace["QUEUES_TO_TASKS"]
 
-        # Config dicts in the target class must have same length.
-        if not len(EXCHANGES) == len(set(QUEUES_TO_EXCHANGES.values())):
-            raise RouterConfigError("inconsistent exchange count")
-
-        if not len(QUEUES_TO_EXCHANGES) == len(QUEUES_TO_TASKS):
-            raise RouterConfigError("inconsistent queue count")
-
-        if set(EXCHANGES.keys()) != set(QUEUES_TO_EXCHANGES.values()):
-            raise RouterConfigError("inconsistent exchange name")
-
-        if set(QUEUES_TO_EXCHANGES.keys()) != set(QUEUES_TO_TASKS.keys()):
-            raise RouterConfigError("inconsistent queue name")
-
-        # Inject the route method into the target class.
+        # Dynamic router method.
         def route(_, task_name):
-            # Self is omitted here to save attribute search for efficiency gain.
-            for (queue, exchange), tasks in zip(
-                QUEUES_TO_EXCHANGES.items(), QUEUES_TO_TASKS.values()
-            ):
-
+            for queue, tasks in QUEUES_TO_TASKS.items():
                 for task in tasks:
-                    if task_name == task:
-                        ex_cnf = EXCHANGES.get(exchange)
-                        if isinstance(ex_cnf, dict):
-                            ex_cnf["exchange"] = exchange
-                            ex_cnf["routing_key"] = f"{exchange}.{queue}"
-                            return ex_cnf
-                    else:
-                        ex_cnf = None
+                    if not task == task_name:
+                        continue
 
-            if ex_cnf is None:
-                raise RouterConfigError(f"task {task_name} not found")
+                    return {
+                        "exchange": queue.exchange.name,
+                        "exchange_type": queue.exchange.type,
+                        "routing_key": queue.routing_key,
+                    }
 
         namespace["route"] = route
+
         return super().__new__(metacls, cls, bases, namespace)
 
 
-class TaskRouter(metaclass=RouterMeta):
-    """This where the routing relationships are laid out. This is the
-    only class you'll need to update if you're just adding or removing
-    new tasks."""
-
-    EXCHANGES = {
-        "alpha": {
-            "exchange_type": "direct",
-        },
-        "beta": {
-            "exchange_type": "direct",
-        },
-    }
-
-    QUEUES_TO_EXCHANGES = {
-        "default": "alpha",
-        "another_0": "beta",
-        "another_1": "beta",
-        "another_2": "beta",
-    }
-
+class Router(metaclass=RouterMeta):
     QUEUES_TO_TASKS = {
-        "default": ("calc.pkg_1.tasks.add",),
-        "another_0": ("calc.pkg_1.tasks.sub",),
-        "another_1": ("calc.pkg_2.tasks.mul",),
-        "another_2": ("calc.pkg_2.tasks.div",),
+        queue_default: ("calc.pkg_1.tasks.add",),
+        queue_another_0: ("calc.pkg_1.tasks.sub",),
+        queue_another_1: ("calc.pkg_2.tasks.mul",),
+        queue_another_2: ("calc.pkg_2.tasks.div",),
     }
 
 
 # Define a simple task router.
 def route_task(name, args, kwargs, options, task=None, **kw):
-    return TaskRouter().route(name)
+    return Router().route(name)
 
 
 # Registering the task routers.
