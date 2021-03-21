@@ -1,7 +1,6 @@
 from enum import Enum
-from typing import DefaultDict
 
-from celery import Celery, bootsteps
+from celery import Celery
 from celery.app.log import TaskFormatter
 from celery.signals import after_setup_task_logger
 from kombu import Exchange, Queue
@@ -21,13 +20,15 @@ def setup_task_logger(logger, *args, **kwargs):
             TaskFormatter(
                 LogColor.START_CYAN
                 + """
-📗 Async Task Log
+Task Log
 ==================
 
-TIMESTAMP   : %(asctime)s
-Task ID     : %(task_id)s
-TASK NAME   : %(task_name)s
-LOG MSG     : %(name)s - %(levelname)s - %(message)s
+TIMESTAMP: %(asctime)s
+Task ID  : %(task_id)s
+TASK NAME: %(task_name)s
+LOG LEVEL: %(levelname)s
+LOG MSG  : %(message)s
+
 """
                 + LogColor.END_WHITE
             )
@@ -37,68 +38,28 @@ LOG MSG     : %(name)s - %(levelname)s - %(message)s
 class ExchangeName(str, Enum):
     ALPHA = "alpha"
     BETA = "beta"
-    DEAD_LETTER = "dead"
 
 
 class ExchangeType(str, Enum):
-    ALPHA = "direct"
-    BETA = "direct"
-    DEAD_LETTER = "direct"
+    DIRECT = "direct"
+    TOPIC = "topic"
+    FANOUT = "fanout"
 
 
 class QueueName(str, Enum):
     DEFAULT = "default"
-    ANOTHER_0 = "another_0"
     ANOTHER_1 = "another_1"
     ANOTHER_2 = "another_2"
-    DEAD_LETTER = "dead_letter"
+    ANOTHER_3 = "another_3"
 
 
 class RouteKeyName(str, Enum):
     """Routing key attributes have the same names as the queues."""
 
     DEFAULT = f"{ExchangeName.ALPHA}.{QueueName.DEFAULT}"
-    ANOTHER_0 = f"{ExchangeName.BETA}.{QueueName.ANOTHER_0}"
     ANOTHER_1 = f"{ExchangeName.BETA}.{QueueName.ANOTHER_1}"
     ANOTHER_2 = f"{ExchangeName.BETA}.{QueueName.ANOTHER_2}"
-    DEAD_LETTER = f"{ExchangeName.DEAD_LETTER}.{QueueName.DEAD_LETTER}"
-
-
-class DeclareDLXnDLQ(bootsteps.StartStopStep):
-    """
-    Celery Bootstep to declare the Dead Letter exchanges and Dead Letter queues
-    before the worker starts processing tasks.
-
-    Tasks can go to the dead_letter_queue when—
-
-    - Message that is sent to a queue that does not exist.
-    - Queue length limit exceeded.
-    - Message length limit exceeded.
-    - Message is rejected by another queue exchange.
-    - Message reaches a threshold read counter number, because it is not consumed.
-    - Sometimes  this is called a "back out queue".
-    - The message expires due to per-message TTL (time to live)
-
-    """
-
-    requires = {"celery.worker.components:Pool"}
-
-    def start(self, worker):
-        app = worker.app
-
-        # Declare DLX and DLQ
-        exchange_dead_letter = Exchange(
-            ExchangeName.DEAD_LETTER, type=ExchangeType.DEAD_LETTER
-        )
-
-        queue_dead_letter = Queue(
-            QueueName.DEAD_LETTER,
-            exchange_dead_letter,
-            routing_key=RouteKeyName.DEAD_LETTER,
-        )
-
-        with worker.app.pool.acquire() as conn:
-            queue_dead_letter.bind(conn).declare()
+    ANOTHER_3 = f"{ExchangeName.BETA}.{QueueName.ANOTHER_3}"
 
 
 app = Celery("calc")
@@ -108,48 +69,40 @@ app = Celery("calc")
 app.conf.broker_url = config.CELERY_BROKER_URL
 app.conf.result_backend = config.CELERY_RESULT_BACKEND
 
+# Declaring default exchange and queue config. This exchange and queue will be used
+# when a task has unspecified or ill-configured QUEUES_TO_TASKS relationship.
+app.conf.task_default_exchange = ExchangeName.ALPHA
+app.conf.task_default_exchange_type = ExchangeType.DIRECT
+app.conf.task_default_queue = QueueName.DEFAULT
+app.conf.task_default_routing_key = RouteKeyName.DEFAULT
+
 # Declaring AMQP exchanges.
-exchange_alpha = Exchange(ExchangeName.ALPHA, type=ExchangeType.ALPHA)
-exchange_beta = Exchange(ExchangeName.BETA, type=ExchangeType.BETA)
+exchange_alpha = Exchange(ExchangeName.ALPHA, type=ExchangeType.DIRECT)
+exchange_beta = Exchange(ExchangeName.BETA, type=ExchangeType.DIRECT)
 
 # Declaring AMQP Queues and binding them with the Exchanges.
 queue_default = Queue(
-    QueueName.DEFAULT,
-    exchange_alpha,
-    routing_key=RouteKeyName.DEFAULT,
-    queue_arguments={
-        "x-dead-letter-exchange": ExchangeName.DEAD_LETTER,
-        "x-dead-letter-routing-key": RouteKeyName.DEAD_LETTER,
-    },
+    QueueName.DEFAULT, exchange_alpha, routing_key=RouteKeyName.DEFAULT
 )
 
-queue_another_0 = Queue(
-    QueueName.ANOTHER_0, exchange_beta, routing_key=RouteKeyName.ANOTHER_0
-)
 queue_another_1 = Queue(
     QueueName.ANOTHER_1, exchange_beta, routing_key=RouteKeyName.ANOTHER_1
 )
 queue_another_2 = Queue(
     QueueName.ANOTHER_2, exchange_beta, routing_key=RouteKeyName.ANOTHER_2
 )
+queue_another_3 = Queue(
+    QueueName.ANOTHER_3, exchange_beta, routing_key=RouteKeyName.ANOTHER_3
+)
 
 
 # Registering task queues into Celery config.
 app.conf.task_queues = (
     queue_default,
-    queue_another_0,
     queue_another_1,
     queue_another_2,
+    queue_another_3,
 )
-
-# Declaring default exchange and queue config. This exchange and queue will be used
-# when a task has unspecified or ill-configured QUEUES_TO_TASKS relationship.
-app.conf.task_default_queue = queue_default.name
-app.conf.task_default_exchange = queue_default.exchange.name
-app.conf.task_default_routing_key = queue_default.routing_key
-
-# Add steps to workers that declare DLX and DLQ if they don't exist.
-app.steps["worker"].add(DeclareDLXnDLQ)
 
 
 class RouterConfigError(Exception):
@@ -245,9 +198,9 @@ app.conf.imports = ("calc.pkg_1.tasks", "calc.pkg_2.tasks", "calc.pkg_3.tasks")
 class Router(metaclass=RouterMeta):
     QUEUES_TO_TASKS = {
         queue_default: ("calc.pkg_1.tasks.add",),
-        queue_another_0: ("calc.pkg_1.tasks.sub",),
-        queue_another_1: ("calc.pkg_2.tasks.mul",),
-        queue_another_2: (
+        queue_another_1: ("calc.pkg_1.tasks.sub",),
+        queue_another_2: ("calc.pkg_2.tasks.mul",),
+        queue_another_3: (
             "calc.pkg_2.tasks.div",
             "calc.pkg_3.tasks.modulo",
         ),

@@ -1,5 +1,4 @@
 from celery import shared_task
-from celery.exceptions import Reject
 from celery.utils.log import get_task_logger
 
 logging = get_task_logger(__name__)
@@ -13,4 +12,4 @@ def modulo(x, y):
 
     except ZeroDivisionError as exc:
         logging.error("Modulo error")
-        raise Reject(exc, requeue=False)
+        raise
