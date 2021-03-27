@@ -4,22 +4,19 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-amqp==2.6.1               # via kombu
-billiard==3.6.3.0         # via celery
-celery==4.4.7             # via -r requirements.in, flower
-flower==0.9.5             # via -r requirements.in
-humanize==3.1.0           # via flower
-kombu==4.6.11             # via celery
-konfik==2.0.3             # via -r requirements.in
-prometheus-client==0.8.0  # via flower
-pygments==2.7.2           # via konfik
-python-dotenv==0.15.0     # via konfik
-pytz==2020.4              # via celery, flower
-pyyaml==5.3.1             # via konfik
-redis==3.5.3              # via -r requirements.in
-toml==0.10.2              # via konfik
-tornado==6.1              # via flower
-vine==1.3.0               # via amqp, celery
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
+certifi==2020.12.5
+    # via httpx
+h11==0.12.0
+    # via httpcore
+httpcore==0.12.3
+    # via httpx
+httpx==0.17.1
+    # via -r requirements.in
+idna==3.1
+    # via rfc3986
+rfc3986[idna2008]==1.4.0
+    # via httpx
+sniffio==1.2.0
+    # via
+    #   httpcore
+    #   httpx

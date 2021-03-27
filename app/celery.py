@@ -5,7 +5,7 @@ from celery.app.log import TaskFormatter
 from celery.signals import after_setup_task_logger
 from kombu import Exchange, Queue
 
-from calc.settings import config
+from app.settings import config
 
 
 class LogColor(str, Enum):
@@ -192,17 +192,19 @@ class RouterMeta(type):
 
 
 # Importing the task modules.
-app.conf.imports = ("calc.pkg_1.tasks", "calc.pkg_2.tasks", "calc.pkg_3.tasks")
+app.conf.imports = ("app.proc.tasks", "app.proc.tasks", "app.io.tasks")
 
 
 class Router(metaclass=RouterMeta):
     QUEUES_TO_TASKS = {
-        queue_default: ("calc.pkg_1.tasks.add",),
-        queue_another_1: ("calc.pkg_1.tasks.sub",),
-        queue_another_2: ("calc.pkg_2.tasks.mul",),
+        queue_default: ("app.proc.tasks.add", "app.proc.tasks.sub"),
+        queue_another_1: ("app.proc.tasks.mul", "app.proc.tasks.div"),
+        queue_another_2: ("app.proc.tasks.modulo",),
         queue_another_3: (
-            "calc.pkg_2.tasks.div",
-            "calc.pkg_3.tasks.modulo",
+            "app.io.tasks.get_data",
+            "app.io.tasks.post_data",
+            "app.io.tasks.put_data",
+            "app.io.tasks.delete_data",
         ),
     }
 
