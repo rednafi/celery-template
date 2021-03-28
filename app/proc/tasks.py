@@ -30,14 +30,3 @@ def div(a, b):
     result = a / b
     logging.info(f"DIV result: {result}")
     return result
-
-
-@shared_task(acks_late=True)
-def modulo(x, y):
-    try:
-        result = x % y
-        logging.info(f"MODULO result: {result}")
-
-    except ZeroDivisionError as exc:
-        logging.error("Modulo error")
-        raise

@@ -18,14 +18,14 @@ The template primarily focuses on—
 * Dynamic configuration to register tasks
 
 
-## Organization
+### Task Organization
 
 ```
 app                     # Application root
-├── io/                 # Package containing I/O oriented tasks
+├── io/                 # Package containing I/O bound tasks
 │   ├── __init__.py
 │   └── tasks.py        # Module containing Celery tasks
-├── proc/               # Package containing Process oriented tasks
+├── proc/               # Package containing CPU bound tasks
 │   ├── __init.__.py
 │   └── tasks.py        # Module containing Celery tasks
 ├── __init__.py
@@ -35,6 +35,26 @@ app                     # Application root
 
 2 directories, 8 files
 ```
+
+The root directory `app` houses two packages containing the Celery tasks. The first package `io` contains all the I/O bound tasks while the second package `proc` has all the CPU bound tasks. We define the async tasks in the `tasks.py` modules of the respective folders.
+
+Module `io/tasks.py` holds 4 I/O bound tasks—`data_get()`, `data_post()`, `data_put()`, and `data_delete()` that performs HTTP **GET**, **POST**, **PUT**, and **DELETE** actions respectively to incur I/O bound load.
+
+Similarly, module `proc/tasks.py` holds 4 CPU bound tasks—`add()`, `sub()`, `mul()`, and `div()` that performs **addition**, **subtraction**, **multiplication** and **division** actions respectively to incur CPU bound load.
+
+In the `settings.py` file, we collect the environment variables and consolidate them in a way that they can be easily accessible from the celery config and the task modules.
+
+Module `celery.py` is where the AMQP exchanges, queues, and task routing logic are defined.
+
+We call the async tasks in the `main.py` file where the tasks are continuously called with 1-second intervals between each incurrence.
+
+### Task Routing and Load Distribution
+
+In the module `celery.py`, we define two exchanges—**alpha** and **beta**. The producer `main.py` calls the async tasks and publishes the messages to the exchanges. Exchange **alpha** is bound to the **default** queue and exchange **beta** is bound to **another_1**, **another_2**, and **another_3** queues. This implies that any message is written to exchange **alpha** will directly go to the **default** queue while messages that are written to exchange **beta** will go to any of the **another_1**, **another_2** or **another_3** queues—depending on their respective routing keys.
+
+CPU bound tasks `proc.tasks.add` and `proc.tasks.sub` are chained together—which means, they will execute sequentially one after another. Task `proc.tasks.mul` and task `proc.tasks.div` are also chained similarly. On the contrary, all the I/O bound tasks execute concurrently without any dependencies between them.
+
+All the CPU-bound tasks run on a Fork pool-based worker named **celery1** that is bound to **default**, **another_1**, and **another_2** queues. The I/O bound tasks run on a Gevent based worker named **celery2**.
 
 ## Installation
 
@@ -69,7 +89,7 @@ If you're running a Debian-based distro and Gnome terminal, then you're in luck.
         celery -A app worker -Q default,another_1 -l INFO -n celery1@%h --concurrency=2
         ```
 
-    * Start another worker process named `celery_2` and register `another_1`, `another_2` and `another_3` queues to the `celery2` worker:
+    * Start another worker process named `celery_2` and register `another_1`, `another_2`, and `another_3` queues to the `celery2` worker:
 
         ```bash
         ```
