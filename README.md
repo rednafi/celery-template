@@ -4,7 +4,8 @@
 
 
 
-![MQ Diagram](https://user-images.githubusercontent.com/30027932/111075718-88260d00-8513-11eb-985e-d2bbae3a048d.png)
+![Template MQ](![celery_template](https://user-images.githubusercontent.com/30027932/112757199-888dd000-900a-11eb-94f0-ad22e353ba85.png)
+)
 
 
 ## Description
@@ -36,17 +37,17 @@ app                     # Application root
 2 directories, 8 files
 ```
 
-The root directory `app` houses two packages containing the Celery tasks. The first package `io` contains all the I/O bound tasks while the second package `proc` has all the CPU bound tasks. We define the async tasks in the `tasks.py` modules of the respective folders.
+* The root directory `app` houses two packages containing the Celery tasks. The first package `io` contains all the I/O bound tasks while the second package `proc` has all the CPU bound tasks. We define the async tasks in the `tasks.py` modules of the respective folders.
 
-Module `io/tasks.py` holds 4 I/O bound tasks—`data_get()`, `data_post()`, `data_put()`, and `data_delete()` that performs HTTP **GET**, **POST**, **PUT**, and **DELETE** actions respectively to incur I/O bound load.
+* Module `io/tasks.py` holds 4 I/O bound tasks—`data_get()`, `data_post()`, `data_put()`, and `data_delete()` that performs HTTP **GET**, **POST**, **PUT**, and **DELETE** actions respectively to incur I/O bound load.
 
-Similarly, module `proc/tasks.py` holds 4 CPU bound tasks—`add()`, `sub()`, `mul()`, and `div()` that performs **addition**, **subtraction**, **multiplication** and **division** actions respectively to incur CPU bound load.
+* Similarly, module `proc/tasks.py` holds 4 CPU bound tasks—`add()`, `sub()`, `mul()`, and `div()` that performs **addition**, **subtraction**, **multiplication** and **division** actions respectively to incur CPU bound load.
 
-In the `settings.py` file, we collect the environment variables and consolidate them in a way that they can be easily accessible from the celery config and the task modules.
+* In the `settings.py` file, we collect the environment variables and consolidate them in a way that they can be easily accessible from the celery config and the task modules.
 
-Module `celery.py` is where the AMQP exchanges, queues, and task routing logic are defined.
+* Module `celery.py` is where the AMQP exchanges, queues, and task routing logic are defined.
 
-We call the async tasks in the `main.py` file where the tasks are continuously called with 1-second intervals between each incurrence.
+* We call the async tasks in the `main.py` file where the tasks are continuously called with 1-second intervals between each incurrence.
 
 ### Task Routing and Load Distribution
 

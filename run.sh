@@ -4,10 +4,10 @@
 docker-compose up -d
 
 # Spawn the alpha worker
-a_worker="celery -A app worker -Q default,another_1 -l INFO -n celery1@%h --concurrency=2"
+a_worker="celery -A app worker -Q default,another_1 -l INFO -n celery_1@%h --concurrency=2"
 
 # Spawn the beta worker
-b_worker="celery -A app --pool=gevent worker -Q another_2 -l INFO -n celery2@%h --concurrency=2"
+b_worker="celery -A app --pool=gevent worker -Q another_2 -l INFO -n celery_2@%h --concurrency=2"
 
 # Spawn flower
 flower="celery flower -A app --address=127.0.0.1 --port=5555"
