@@ -17,8 +17,6 @@ The template primarily focuses on—
 
 * Dynamic configuration to register tasks
 
-* and basic **task chaining** where tasks can be dependent on other tasks and need to be executed in order.
-
 
 ## Organization
 
@@ -65,17 +63,16 @@ If you're running a Debian-based distro and Gnome terminal, then you're in luck.
 
 * Run the following commands in different terminal windows sequentially:
 
-    * Start a worker process named **celery_1** and register the **default** queue to that:
+    * Start a worker process named `celery_1` and register the `default` queue to that:
 
         ```bash
         celery -A app worker -Q default -l INFO -n celery1@%h --concurrency=1
         ```
 
-    * Start another worker process named **celery_2** and register **another_1**, **another_2** and **another_3** queues to the **celery2** worker:
+    * Start another worker process named `celery_2` and register `another_1`, `another_2` and `another_3` queues to the `celery2` worker:
 
         ```bash
-        celery -A app worker -Q another_1,another_2,another_3 \
-        -l INFO -n celery2@%h --concurrency=1
+        celery -A app worker -Q another_1,another_2,another_3 -l INFO -n celery2@%h \ --concurrency=1
         ```
 
     * Start the task monitoring tool:
