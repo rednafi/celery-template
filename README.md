@@ -50,7 +50,7 @@ app                     # Application root
 
 ### Task Routing and Load Distribution
 
-In the module `celery.py`, we define two exchanges—**alpha** and **beta**. The producer `main.py` calls the async tasks and publishes the messages to the exchanges. Exchange **alpha** is bound to the **default** queue and exchange **beta** is bound to **another_1**, **another_2**, and **another_3** queues. This implies that any message is written to exchange **alpha** will directly go to the **default** queue while messages that are written to exchange **beta** will go to any of the **another_1**, **another_2** or **another_3** queues—depending on their respective routing keys.
+In the module `celery.py`, we define two exchanges—**alpha** and **beta**. The producer `main.py` calls the async tasks and publishes the messages to the exchanges. Exchange **alpha** is bound to the **default** queue and exchange **beta** is bound to **another_1**, **another_2**, and **another_3** queues. This implies that any message written to exchange **alpha** will directly go to the **default** queue while messages that are written to exchange **beta** will go to any of the **another_1**, **another_2** or **another_3** queues—depending on their respective routing keys.
 
 CPU bound tasks `proc.tasks.add` and `proc.tasks.sub` are chained together—which means, they will execute sequentially one after another. Task `proc.tasks.mul` and task `proc.tasks.div` are also chained similarly. On the contrary, all the I/O bound tasks execute concurrently without any dependencies between them.
 
