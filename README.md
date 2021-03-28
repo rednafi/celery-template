@@ -4,7 +4,7 @@
 
 
 
-![Template MQ](![celery_template](https://user-images.githubusercontent.com/30027932/112757199-888dd000-900a-11eb-94f0-ad22e353ba85.png)
+![celery_template](https://user-images.githubusercontent.com/30027932/112757199-888dd000-900a-11eb-94f0-ad22e353ba85.png)
 )
 
 
