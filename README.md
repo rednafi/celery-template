@@ -92,6 +92,7 @@ If you're running a Debian-based distro and Gnome terminal, then you're in luck.
     * Start another worker process named `celery_2` and register `another_1`, `another_2`, and `another_3` queues to the `celery2` worker:
 
         ```bash
+        celery -A app --pool=gevent worker -Q another_2 -l INFO -n celery_2@%h --concurrency=2
         ```
 
     * Start the task monitoring tool:
