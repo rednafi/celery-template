@@ -86,7 +86,7 @@ queue_default = Queue(
 )
 
 queue_another_1 = Queue(
-    QueueName.ANOTHER_1, exchange_beta, routing_key=RouteKeyName.ANOTHER_1
+    QueueName.ANOTHER_1, exchange_alpha, routing_key=RouteKeyName.ANOTHER_1
 )
 queue_another_2 = Queue(
     QueueName.ANOTHER_2, exchange_beta, routing_key=RouteKeyName.ANOTHER_2
@@ -197,10 +197,16 @@ app.conf.imports = ("app.proc.tasks", "app.proc.tasks", "app.io.tasks")
 
 class Router(metaclass=RouterMeta):
     QUEUES_TO_TASKS = {
-        queue_default: ("app.proc.tasks.add", "app.proc.tasks.sub"),
-        queue_another_1: ("app.proc.tasks.mul", "app.proc.tasks.div"),
-        queue_another_2: ("app.proc.tasks.modulo",),
-        queue_another_3: (
+        queue_default: (
+            "app.proc.tasks.add",
+            "app.proc.tasks.sub",
+        ),
+        queue_another_1: (
+            "app.proc.tasks.mul",
+            "app.proc.tasks.div",
+            "app.proc.tasks.modulo",
+        ),
+        queue_another_2: (
             "app.io.tasks.get_data",
             "app.io.tasks.post_data",
             "app.io.tasks.put_data",
