@@ -66,14 +66,12 @@ If you're running a Debian-based distro and Gnome terminal, then you're in luck.
     * Start a worker process named `celery_1` and register the `default` queue to that:
 
         ```bash
-        celery -A app worker -Q default -l INFO -n celery1@%h --concurrency=1
+        celery -A app worker -Q default,another_1 -l INFO -n celery1@%h --concurrency=2
         ```
 
     * Start another worker process named `celery_2` and register `another_1`, `another_2` and `another_3` queues to the `celery2` worker:
 
         ```bash
-        celery -A app worker -Q another_1,another_2,another_3 -l INFO -n \
-        celery2@%h --concurrency=1
         ```
 
     * Start the task monitoring tool:
