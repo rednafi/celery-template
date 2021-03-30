@@ -3,7 +3,7 @@
 </div>
 
 
-![celery_template](https://user-images.githubusercontent.com/30027932/112757422-9001a900-900b-11eb-8ba5-ef8263fd79cb.png)
+![celery_template](https://user-images.githubusercontent.com/30027932/112998087-843eef80-918f-11eb-9415-7dd3ad1211fa.png)
 
 
 
